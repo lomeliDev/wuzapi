@@ -15,11 +15,14 @@ type Middleware = alice.Constructor
 
 func (s *server) routes() {
 
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
+	staticPath := "./static/"
+
+    if os.Getenv("GO_ENV") != "dev" {
+        ex, err := os.Executable()
+        if err == nil {
+            staticPath = filepath.Join(filepath.Dir(ex), "static")
+        }
+    }
 
 	var routerLog zerolog.Logger
 	logOutput := os.Stdout
@@ -159,5 +162,5 @@ func (s *server) routes() {
 
 	s.router.Handle("/newsletter/list", c.Then(s.ListNewsletter())).Methods("GET")
 
-	s.router.PathPrefix("/").Handler(http.FileServer(http.Dir(exPath + "/static/")))
+	s.router.PathPrefix("/").Handler(http.FileServer(http.Dir(staticPath)))
 }
