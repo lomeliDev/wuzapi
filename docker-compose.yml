@@ -77,6 +77,16 @@ services:
     networks:
       - wuzapi-network
 
+  webhook-tester:
+    image: ghcr.io/tarampampam/webhook-tester:latest
+    container_name: webhook-tester
+    command: serve
+    ports:
+      - "8082:8080"
+    networks:
+      - wuzapi-network
+    restart: unless-stopped
+
 networks:
   wuzapi-network:
     driver: bridge
