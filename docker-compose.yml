@@ -103,6 +103,29 @@ services:
       - wuzapi-network
     restart: unless-stopped
 
+  proxy-http:
+    image: kalaksi/tinyproxy:latest
+    restart: unless-stopped
+    environment:
+      - ALLOW=0.0.0.0/0
+    networks:
+      - wuzapi-network
+    ports:
+      - "8888:8888"
+
+  # --- SOCKS5 Proxy (With Auth) ---
+  proxy-socks:
+    image: serjs/go-socks5-proxy
+    restart: unless-stopped
+    environment:
+      - PROXY_USER=wuzapi
+      - PROXY_PASSWORD=wuzapi
+      - PROXY_PORT=1080
+    networks:
+      - wuzapi-network
+    ports:
+      - "1080:1080"
+
 networks:
   wuzapi-network:
     driver: bridge
