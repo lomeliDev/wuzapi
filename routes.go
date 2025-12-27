@@ -17,12 +17,12 @@ func (s *server) routes() {
 
 	staticPath := "./static/"
 
-    if os.Getenv("GO_ENV") != "dev" {
-        ex, err := os.Executable()
-        if err == nil {
-            staticPath = filepath.Join(filepath.Dir(ex), "static")
-        }
-    }
+	if os.Getenv("GO_ENV") != "dev" {
+		ex, err := os.Executable()
+		if err == nil {
+			staticPath = filepath.Join(filepath.Dir(ex), "static")
+		}
+	}
 
 	var routerLog zerolog.Logger
 	logOutput := os.Stdout
@@ -161,6 +161,8 @@ func (s *server) routes() {
 	s.router.Handle("/group/updateparticipants", c.Then(s.UpdateGroupParticipants())).Methods("POST")
 
 	s.router.Handle("/newsletter/list", c.Then(s.ListNewsletter())).Methods("GET")
+
+	s.router.Handle("/misc/phone", c.Then(s.GetFormattedPhone())).Methods("POST")
 
 	s.router.PathPrefix("/").Handler(http.FileServer(http.Dir(staticPath)))
 }

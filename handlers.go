@@ -1790,7 +1790,7 @@ func (s *server) SendLocation() http.HandlerFunc {
 	}
 }
 
-// Sends Buttons (not implemented, does not work) 
+// Sends Buttons (not implemented, does not work)
 func (s *server) SendButtons() http.HandlerFunc {
 
 	type buttonStruct struct {
@@ -5277,45 +5277,45 @@ func (s *server) Respond(w http.ResponseWriter, r *http.Request, status int, dat
 // validateMessageFields validates and corrects the JID using the WhatsApp API
 func validateMessageFields(client *whatsmeow.Client, phone string, stanzaid *string, participant *string) (types.JID, error) {
 
-    recipient, ok := parseJID(phone)
-    if !ok {
-        return types.NewJID("", types.DefaultUserServer), errors.New("could not parse Phone")
-    }
+	recipient, ok := parseJID(phone)
+	if !ok {
+		return types.NewJID("", types.DefaultUserServer), errors.New("could not parse Phone")
+	}
 
-    if client != nil && recipient.Server == types.DefaultUserServer {
-        
-        checkPhone := "+" + recipient.User
-        results, err := client.IsOnWhatsApp(context.Background(), []string{checkPhone})
-        
-        if err != nil {
-            return types.NewJID("", types.DefaultUserServer), fmt.Errorf("failed to check if number exists: %v", err)
-        }
+	if client != nil && recipient.Server == types.DefaultUserServer {
 
-        if len(results) == 0 || !results[0].IsIn {
-            return types.NewJID("", types.DefaultUserServer), errors.New("no account exists")
-        }
+		checkPhone := "+" + recipient.User
+		results, err := client.IsOnWhatsApp(context.Background(), []string{checkPhone})
 
-        recipient = results[0].JID
-    }
+		if err != nil {
+			return types.NewJID("", types.DefaultUserServer), fmt.Errorf("failed to check if number exists: %v", err)
+		}
 
-    if stanzaid != nil {
-        if participant == nil {
-            return types.NewJID("", types.DefaultUserServer), errors.New("missing Participant in ContextInfo")
-        }
-    }
+		if len(results) == 0 || !results[0].IsIn {
+			return types.NewJID("", types.DefaultUserServer), errors.New("no account exists")
+		}
 
-    if participant != nil {
-        if stanzaid == nil {
-            return types.NewJID("", types.DefaultUserServer), errors.New("missing StanzaID in ContextInfo")
-        }
-    }
+		recipient = results[0].JID
+	}
 
-    log.Info().
-        Str("original_input", phone).
-        Str("resolved_jid", recipient.String()).
-        Msg("JID Validated")
+	if stanzaid != nil {
+		if participant == nil {
+			return types.NewJID("", types.DefaultUserServer), errors.New("missing Participant in ContextInfo")
+		}
+	}
 
-    return recipient, nil
+	if participant != nil {
+		if stanzaid == nil {
+			return types.NewJID("", types.DefaultUserServer), errors.New("missing StanzaID in ContextInfo")
+		}
+	}
+
+	log.Info().
+		Str("original_input", phone).
+		Str("resolved_jid", recipient.String()).
+		Msg("JID Validated")
+
+	return recipient, nil
 }
 
 // Set history
@@ -6503,5 +6503,63 @@ func (s *server) DownloadSticker() http.HandlerFunc {
 			s.Respond(w, r, http.StatusOK, string(responseJson))
 		}
 		return
+	}
+}
+
+// GetFormattedPhone uses the WhatsApp network to validate and correct a phone number
+func (s *server) GetFormattedPhone() http.HandlerFunc {
+
+	type phoneStruct struct {
+		Phone string `json:"phone"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		txtid := r.Context().Value("userinfo").(Values).Get("Id")
+
+		// Necesitamos el cliente conectado para preguntar a la API de WhatsApp
+		client := clientManager.GetWhatsmeowClient(txtid)
+		if client == nil {
+			s.Respond(w, r, http.StatusInternalServerError, errors.New("no session found"))
+			return
+		}
+
+		decoder := json.NewDecoder(r.Body)
+		var t phoneStruct
+		err := decoder.Decode(&t)
+		if err != nil {
+			s.Respond(w, r, http.StatusBadRequest, errors.New("could not decode Payload"))
+			return
+		}
+
+		if t.Phone == "" {
+			s.Respond(w, r, http.StatusBadRequest, errors.New("missing Phone in Payload"))
+			return
+		}
+
+		// Usamos la función mágica que ya creamos/arreglamos
+		// Pasamos nil en stanza y participant porque no es un mensaje real, solo queremos validar el JID
+		jid, err := validateMessageFields(client, t.Phone, nil, nil)
+
+		if err != nil {
+			// Si falla (ej. el número no existe en WhatsApp), devolvemos error
+			s.Respond(w, r, http.StatusBadRequest, fmt.Errorf("validation failed: %v", err))
+			return
+		}
+
+		// Preparamos la respuesta con los datos limpios
+		response := map[string]interface{}{
+			"input":  t.Phone,      // Lo que enviaste (ej: 5233...)
+			"jid":    jid.String(), // El JID completo (ej: 52133...@s.whatsapp.net)
+			"number": jid.User,     // Solo el número corregido (ej: 52133...)
+			"exists": true,         // Confirmación de que existe
+		}
+
+		responseJson, err := json.Marshal(response)
+		if err != nil {
+			s.Respond(w, r, http.StatusInternalServerError, err)
+		} else {
+			s.Respond(w, r, http.StatusOK, string(responseJson))
+		}
 	}
 }

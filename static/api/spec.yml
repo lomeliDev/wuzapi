@@ -881,6 +881,39 @@ paths:
           description: Invalid or missing token
         404:
           description: User not found
+  /misc/phone:
+    post:
+      tags:
+        - Misc
+      summary: Validate and format phone number
+      description: Sends a phone number to WhatsApp API to verify existence and get the correct international format (JID). ideal for correcting Mexico numbers (+521).
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  example: "523312345678"
+      responses:
+        200:
+          description: Phone Validated
+          content:
+            application/json:
+              schema:
+                example: { 
+                  "input": "523312345678", 
+                  "jid": "5213312345678@s.whatsapp.net", 
+                  "number": "5213312345678",
+                  "exists": true 
+                }
+        400:
+          description: Invalid Number or Not on WhatsApp
+
   /chat/delete:
     post:
       tags:
