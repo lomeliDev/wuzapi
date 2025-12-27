@@ -854,7 +854,7 @@ func (s *server) SendDocument() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -992,7 +992,7 @@ func (s *server) SendAudio() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -1142,7 +1142,7 @@ func (s *server) SendImage() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -1333,7 +1333,7 @@ func (s *server) SendSticker() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -1466,7 +1466,7 @@ func (s *server) SendVideo() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -1623,7 +1623,7 @@ func (s *server) SendContact() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -1728,7 +1728,7 @@ func (s *server) SendLocation() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -1790,7 +1790,7 @@ func (s *server) SendLocation() http.HandlerFunc {
 	}
 }
 
-// Sends Buttons (not implemented, does not work)
+// Sends Buttons (not implemented, does not work) 
 func (s *server) SendButtons() http.HandlerFunc {
 
 	type buttonStruct struct {
@@ -2140,7 +2140,7 @@ func (s *server) SendMessage() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -2277,7 +2277,7 @@ func (s *server) SendPoll() http.HandlerFunc {
 			msgid = req.Id
 		}
 
-		recipient, err := validateMessageFields(req.Group, nil, nil)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), req.Group, nil, nil)
 		if err != nil {
 			s.Respond(w, r, http.StatusBadRequest, err)
 			return
@@ -2342,8 +2342,8 @@ func (s *server) DeleteMessage() http.HandlerFunc {
 
 		msgid = t.Id
 
-		recipient, ok := parseJID(t.Phone)
-		if !ok {
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, nil, nil)
+		if err != nil {
 			s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Phone"))
 			return
 		}
@@ -2407,7 +2407,7 @@ func (s *server) SendEditMessage() http.HandlerFunc {
 			return
 		}
 
-		recipient, err := validateMessageFields(t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, t.ContextInfo.StanzaID, t.ContextInfo.Participant)
 		if err != nil {
 			log.Error().Msg(fmt.Sprintf("%s", err))
 			s.Respond(w, r, http.StatusBadRequest, err)
@@ -2952,8 +2952,9 @@ func (s *server) GetAvatar() http.HandlerFunc {
 			return
 		}
 
-		jid, ok := parseJID(t.Phone)
-		if !ok {
+		jid, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, nil, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("Error parsing Phone")
 			s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Phone"))
 			return
 		}
@@ -3055,9 +3056,10 @@ func (s *server) ChatPresence() http.HandlerFunc {
 			return
 		}
 
-		jid, ok := parseJID(t.Phone)
-		if !ok {
-			s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Phone"))
+		jid, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, nil, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("Error parsing Phone")
+			s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Group JID"))
 			return
 		}
 
@@ -3434,8 +3436,9 @@ func (s *server) React() http.HandlerFunc {
 			return
 		}
 
-		recipient, ok := parseJID(t.Phone)
-		if !ok {
+		recipient, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.Phone, nil, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("Error parsing Phone")
 			s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Group JID"))
 			return
 		}
@@ -3530,11 +3533,11 @@ func (s *server) MarkRead() http.HandlerFunc {
 		}
 
 		var jidChat types.JID
-
 		if len(t.ChatPhone) > 0 {
-			var ok bool
-			jidChat, ok = parseJID(t.ChatPhone)
-			if !ok {
+			var err error
+			jidChat, err = validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.ChatPhone, nil, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("Error parsing ChatPhone")
 				s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse ChatPhone"))
 				return
 			}
@@ -3546,11 +3549,11 @@ func (s *server) MarkRead() http.HandlerFunc {
 		}
 
 		var jidSender types.JID
-
 		if len(t.SenderPhone) > 0 {
-			var ok bool
-			jidSender, ok = parseJID(t.SenderPhone)
-			if !ok {
+			var err error
+			jidSender, err = validateMessageFields(clientManager.GetWhatsmeowClient(txtid), t.SenderPhone, nil, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("Error parsing SenderPhone")
 				s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse SenderPhone"))
 				return
 			}
@@ -3823,13 +3826,13 @@ func (s *server) CreateGroup() http.HandlerFunc {
 
 		// Parse participant phone numbers
 		participantJIDs := make([]types.JID, len(t.Participants))
-		var ok bool
 		for i, phone := range t.Participants {
-			participantJIDs[i], ok = parseJID(phone)
-			if !ok {
+			jid, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), phone, nil, nil)
+			if err != nil {
 				s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Participant Phone"))
 				return
 			}
+			participantJIDs[i] = jid
 		}
 
 		req := whatsmeow.ReqCreateGroup{
@@ -4076,11 +4079,13 @@ func (s *server) UpdateGroupParticipants() http.HandlerFunc {
 		// parse phone numbers
 		phoneParsed := make([]types.JID, len(t.Phone))
 		for i, phone := range t.Phone {
-			phoneParsed[i], ok = parseJID(phone)
-			if !ok {
+			jid, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), phone, nil, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("Error parsing Phone")
 				s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse Phone"))
 				return
 			}
+			phoneParsed[i] = jid
 		}
 
 		if t.Action == "" {
@@ -5269,27 +5274,48 @@ func (s *server) Respond(w http.ResponseWriter, r *http.Request, status int, dat
 	}
 }
 
-// Validate message fields
-func validateMessageFields(phone string, stanzaid *string, participant *string) (types.JID, error) {
+// validateMessageFields validates and corrects the JID using the WhatsApp API
+func validateMessageFields(client *whatsmeow.Client, phone string, stanzaid *string, participant *string) (types.JID, error) {
 
-	recipient, ok := parseJID(phone)
-	if !ok {
-		return types.NewJID("", types.DefaultUserServer), errors.New("could not parse Phone")
-	}
+    recipient, ok := parseJID(phone)
+    if !ok {
+        return types.NewJID("", types.DefaultUserServer), errors.New("could not parse Phone")
+    }
 
-	if stanzaid != nil {
-		if participant == nil {
-			return types.NewJID("", types.DefaultUserServer), errors.New("missing Participant in ContextInfo")
-		}
-	}
+    if client != nil && recipient.Server == types.DefaultUserServer {
+        
+        checkPhone := "+" + recipient.User
+        results, err := client.IsOnWhatsApp(context.Background(), []string{checkPhone})
+        
+        if err != nil {
+            return types.NewJID("", types.DefaultUserServer), fmt.Errorf("failed to check if number exists: %v", err)
+        }
 
-	if participant != nil {
-		if stanzaid == nil {
-			return types.NewJID("", types.DefaultUserServer), errors.New("missing StanzaID in ContextInfo")
-		}
-	}
+        if len(results) == 0 || !results[0].IsIn {
+            return types.NewJID("", types.DefaultUserServer), errors.New("no account exists")
+        }
 
-	return recipient, nil
+        recipient = results[0].JID
+    }
+
+    if stanzaid != nil {
+        if participant == nil {
+            return types.NewJID("", types.DefaultUserServer), errors.New("missing Participant in ContextInfo")
+        }
+    }
+
+    if participant != nil {
+        if stanzaid == nil {
+            return types.NewJID("", types.DefaultUserServer), errors.New("missing StanzaID in ContextInfo")
+        }
+    }
+
+    log.Info().
+        Str("original_input", phone).
+        Str("resolved_jid", recipient.String()).
+        Msg("JID Validated")
+
+    return recipient, nil
 }
 
 // Set history
@@ -6214,9 +6240,10 @@ func (s *server) GetUserLID() http.HandlerFunc {
 		}
 
 		// Parse the JID (phone number)
-		jid, ok := parseJID(jidParam)
-		if !ok {
-			s.Respond(w, r, http.StatusBadRequest, errors.New("invalid jid format"))
+		jid, err := validateMessageFields(clientManager.GetWhatsmeowClient(txtid), jidParam, nil, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("Error parsing JID")
+			s.Respond(w, r, http.StatusBadRequest, errors.New("could not parse JID"))
 			return
 		}
 
